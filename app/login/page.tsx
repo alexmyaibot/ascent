@@ -10,11 +10,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
-  const [oauthLoading, setOauthLoading] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
-    // Listen for OAuth callback
+    // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
@@ -50,23 +49,7 @@ export default function LoginPage() {
     }
   }
 
-  const handleOAuthSignIn = async (provider: 'google' | 'apple') => {
-    setOauthLoading(provider)
-    setError('')
 
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-      if (error) throw error
-    } catch (err: any) {
-      setError(err.message || `Failed to sign in with ${provider}`)
-      setOauthLoading(null)
-    }
-  }
 
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center">
@@ -74,33 +57,7 @@ export default function LoginPage() {
         <h1 className="text-3xl font-bold text-white mb-2 text-center">Ascent 🧗</h1>
         <p className="text-gray-400 text-center mb-6">Track climbing progress</p>
 
-        {/* Social Sign In */}
-        <div className="space-y-3 mb-6">
-          <button
-            onClick={() => handleOAuthSignIn('google')}
-            disabled={oauthLoading === 'google'}
-            className="w-full px-4 py-3 bg-white hover:bg-gray-100 disabled:bg-gray-300 text-slate-900 font-bold rounded-lg flex items-center justify-center gap-2"
-          >
-            {oauthLoading === 'google' ? '🔄' : '🔵'} Google
-          </button>
-          <button
-            onClick={() => handleOAuthSignIn('apple')}
-            disabled={oauthLoading === 'apple'}
-            className="w-full px-4 py-3 bg-black hover:bg-gray-900 disabled:bg-gray-700 text-white font-bold rounded-lg flex items-center justify-center gap-2"
-          >
-            {oauthLoading === 'apple' ? '🔄' : '🍎'} Apple
-          </button>
-        </div>
 
-        {/* Divider */}
-        <div className="relative mb-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-600"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-slate-800 text-gray-400">or</span>
-          </div>
-        </div>
 
         {/* Email/Password Form */}
         <form onSubmit={handleAuth} className="space-y-4">
