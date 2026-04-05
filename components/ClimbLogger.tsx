@@ -14,10 +14,40 @@ export function ClimbLogger() {
   const [success, setSuccess] = useState('')
   const [photos, setPhotos] = useState<File[]>([])
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([])
+  const [location, setLocation] = useState('')
+  const [locationMethod, setLocationMethod] = useState<'manual' | 'gps'>('manual')
+  const [gpsLoading, setGpsLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
 
+  const presetLocations = ['Momentum Fort Union', 'Momentum Sandy', 'Home Wall', 'Red Rock', 'Smith Rock', 'Yosemite']
+
   const difficulties = ['5.5', '5.6', '5.7', '5.8', '5.9', '5.10a', '5.10b', '5.10c', '5.10d', '5.11a', '5.11b', '5.11c', '5.11d', '5.12a', '5.12b', '5.12c', '5.12d', 'V0', 'V1', 'V2', 'V3', 'V4', 'V5']
+
+  const captureGPS = async () => {
+    setGpsLoading(true)
+    setError('')
+    try {
+      if (!navigator.geolocation) {
+        setError('GPS not available on this device')
+        return
+      }
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords
+          setLocation(`📍 ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`)
+          setGpsLoading(false)
+        },
+        (err) => {
+          setError('Could not access GPS: ' + err.message)
+          setGpsLoading(false)
+        }
+      )
+    } catch (err: any) {
+      setError('GPS error: ' + err.message)
+      setGpsLoading(false)
+    }
+  }
 
   const handlePhotoCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.currentTarget.files
@@ -76,10 +106,11 @@ export function ClimbLogger() {
         .insert([
           {
             user_id: user_id,
-            route_name: routeName,
+            route_name: routeName || null,
             difficulty: difficulty,
             time_seconds: seconds,
             notes: notes || null,
+            location: location || null,
             date_climbed: new Date().toISOString(),
           },
         ])
@@ -119,6 +150,7 @@ export function ClimbLogger() {
       setRouteName('')
       setNotes('')
       setDifficulty('5.6')
+      setLocation('')
       setPhotos([])
       setPhotoPreviews([])
       reset()
@@ -193,6 +225,52 @@ export function ClimbLogger() {
               </option>
             ))}
           </select>
+        </div>
+
+        {/* Location */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-300 mb-2">
+            📍 Location (optional)
+          </label>
+          
+          {/* Quick Select */}
+          <div className="flex flex-wrap gap-2 mb-3">
+            {presetLocations.map((loc) => (
+              <button
+                key={loc}
+                type="button"
+                onClick={() => setLocation(loc)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+                  location === loc
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+                }`}
+              >
+                {loc}
+              </button>
+            ))}
+          </div>
+
+          {/* Manual Input */}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Or type location..."
+              className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-emerald-500 focus:outline-none placeholder-slate-500 text-sm"
+            />
+            <button
+              type="button"
+              onClick={captureGPS}
+              disabled={gpsLoading}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white rounded-lg font-semibold text-sm transition-colors"
+              title="Use phone GPS to capture location"
+            >
+              {gpsLoading ? '⏳' : '🛰️'}
+            </button>
+          </div>
+          <p className="text-xs text-gray-400 mt-1">Quick select a gym or use GPS/manual entry</p>
         </div>
 
         {/* Notes */}
