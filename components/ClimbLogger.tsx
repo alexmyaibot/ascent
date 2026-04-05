@@ -6,7 +6,7 @@ import { useTimer } from '@/hooks/useTimer'
 
 export function ClimbLogger() {
   const { seconds, isRunning, start, stop, reset, formatTime } = useTimer()
-  const [routeName, setRouteName] = useState('')
+  const [gym, setGym] = useState('Momentum Fort Union')
   const [climbType, setClimbType] = useState<'topRope' | 'boulder'>('topRope')
   const [topRopeDifficulty, setTopRopeDifficulty] = useState(6) // 5.6 is index 6
   const [boulderDifficulty, setBoulderDifficulty] = useState(0) // V0
@@ -128,7 +128,7 @@ export function ClimbLogger() {
         .insert([
           {
             user_id: user_id,
-            route_name: routeName || null,
+            route_name: gym || null,
             difficulty: getCurrentDifficulty(),
             climb_type: climbType,
             time_seconds: seconds,
@@ -171,7 +171,7 @@ export function ClimbLogger() {
       }
 
       // Reset form
-      setRouteName('')
+      setGym('Momentum Fort Union')
       setClimbType('topRope')
       setTopRopeDifficulty(6)
       setBoulderDifficulty(0)
@@ -363,17 +363,33 @@ export function ClimbLogger() {
           <p className="text-xs text-gray-400">{photos.length} photo(s) selected</p>
         </div>
 
-        {/* Route Name */}
+        {/* Gym Location */}
         <div>
           <label className="block text-sm font-semibold text-gray-300 mb-2">
-            Route Name (optional)
+            📍 Where Are You Climbing?
           </label>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {['Momentum Fort Union', 'Momentum Sandy', 'Momentum Millcreek'].map((loc) => (
+              <button
+                key={loc}
+                type="button"
+                onClick={() => setGym(loc)}
+                className={`px-3 py-1 rounded-full text-sm font-semibold transition-colors ${
+                  gym === loc
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+                }`}
+              >
+                {loc}
+              </button>
+            ))}
+          </div>
           <input
             type="text"
-            value={routeName}
-            onChange={(e) => setRouteName(e.target.value)}
-            placeholder="e.g., The Red Wall, Crimper Challenge..."
-            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-emerald-500 focus:outline-none placeholder-slate-500"
+            value={gym}
+            onChange={(e) => setGym(e.target.value)}
+            placeholder="Or type a different gym..."
+            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-emerald-500 focus:outline-none placeholder-slate-500 text-sm"
           />
         </div>
 
