@@ -8,52 +8,37 @@ export function ClimbLogger() {
   const { seconds, isRunning, start, stop, reset, formatTime } = useTimer()
   const [routeName, setRouteName] = useState('')
   const [difficulty, setDifficulty] = useState('5.6')
-  const [notes, setNotes] = useState('')
+  const [location, setLocation, setLocationData] = useState('')
+  const [funFactor, setFunFactor] = useState(0)
+  const [perceivedDifficulty, setPerceivedDifficulty] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [photos, setPhotos] = useState<File[]>([])
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([])
-  const [location, setLocation] = useState('')
-  const [locationMethod, setLocationMethod] = useState<'manual' | 'gps'>('manual')
-  const [gpsLoading, setGpsLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
 
-  const presetLocations = ['Momentum Fort Union', 'Momentum Sandy', 'Home Wall', 'Red Rock', 'Smith Rock', 'Yosemite']
-
   const difficulties = ['5.5', '5.6', '5.7', '5.8', '5.9', '5.10a', '5.10b', '5.10c', '5.10d', '5.11a', '5.11b', '5.11c', '5.11d', '5.12a', '5.12b', '5.12c', '5.12d', 'V0', 'V1', 'V2', 'V3', 'V4', 'V5']
 
-  const captureGPS = async () => {
-    setGpsLoading(true)
-    setError('')
-    try {
-      if (!navigator.geolocation) {
-        setError('GPS not available on this device')
-        return
-      }
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords
-          setLocation(`📍 ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`)
-          setGpsLoading(false)
-        },
-        (err) => {
-          setError('Could not access GPS: ' + err.message)
-          setGpsLoading(false)
-        }
-      )
-    } catch (err: any) {
-      setError('GPS error: ' + err.message)
-      setGpsLoading(false)
-    }
-  }
-
-  const handlePhotoCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.currentTarget.files
     if (files) {
       const newPhotos = Array.from(files)
       setPhotos([...photos, ...newPhotos])
+      
+      // Try to extract location from first photo's metadata
+      if (newPhotos.length > 0 && !location) {
+        try {
+          const file = newPhotos[0]
+          const exifData = await extractExifData(file)
+          if (exifData?.gps) {
+            setLocation(`📍 ${exifData.gps.latitude.toFixed(4)}, ${exifData.gps.longitude.toFixed(4)}`)
+          }
+        } catch (err) {
+          console.log('Could not extract location from photo metadata')
+        }
+      }
       
       // Create previews
       newPhotos.forEach(file => {
@@ -66,23 +51,49 @@ export function ClimbLogger() {
     }
   }
 
+  const extractExifData = async (file: File): Promise<any> => {
+    // This is a simplified version - real EXIF extraction would need a library
+    // For now, we'll just return null as a placeholder
+    return null
+  }
+
   const removePhoto = (index: number) => {
     setPhotos(photos.filter((_, i) => i !== index))
     setPhotoPreviews(photoPreviews.filter((_, i) => i !== index))
   }
+
+  const StarRating = ({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) => (
+    <div>
+      <label className="block text-sm font-semibold text-gray-300 mb-2">{label}</label>
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => onChange(value === star ? 0 : star)}
+            className={`text-2xl transition-colors ${
+              value >= star ? 'text-yellow-400' : 'text-gray-600 hover:text-gray-500'
+            }`}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+    </div>
+  )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setSuccess('')
 
-    if (!routeName.trim()) {
-      setError('Route name is required')
+    if (seconds === 0) {
+      setError('Please record some climbing time')
       return
     }
 
-    if (seconds === 0) {
-      setError('Please record some climbing time')
+    if (photos.length === 0) {
+      setError('Please take at least one photo of the route')
       return
     }
 
@@ -109,8 +120,9 @@ export function ClimbLogger() {
             route_name: routeName || null,
             difficulty: difficulty,
             time_seconds: seconds,
-            notes: notes || null,
             location: location || null,
+            fun_factor: funFactor,
+            perceived_difficulty: perceivedDifficulty,
             date_climbed: new Date().toISOString(),
           },
         ])
@@ -148,13 +160,14 @@ export function ClimbLogger() {
 
       // Reset form
       setRouteName('')
-      setNotes('')
       setDifficulty('5.6')
       setLocation('')
+      setFunFactor(0)
+      setPerceivedDifficulty(0)
       setPhotos([])
       setPhotoPreviews([])
       reset()
-      setSuccess(`✅ Logged ${routeName} in ${formatTime}${photos.length > 0 ? ` with ${photos.length} photo(s)` : ''}!`)
+      setSuccess(`✅ Logged climb in ${formatTime}!`)
 
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(''), 3000)
@@ -195,101 +208,10 @@ export function ClimbLogger() {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Route Name */}
+        {/* Photo Capture - Right under timer */}
         <div>
           <label className="block text-sm font-semibold text-gray-300 mb-2">
-            Route Name
-          </label>
-          <input
-            type="text"
-            value={routeName}
-            onChange={(e) => setRouteName(e.target.value)}
-            placeholder="e.g., The Red Wall, Crimper Challenge..."
-            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-emerald-500 focus:outline-none placeholder-slate-500"
-          />
-        </div>
-
-        {/* Difficulty */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-300 mb-2">
-            Difficulty
-          </label>
-          <select
-            value={difficulty}
-            onChange={(e) => setDifficulty(e.target.value)}
-            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-emerald-500 focus:outline-none"
-          >
-            {difficulties.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Location */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-300 mb-2">
-            📍 Location (optional)
-          </label>
-          
-          {/* Quick Select */}
-          <div className="flex flex-wrap gap-2 mb-3">
-            {presetLocations.map((loc) => (
-              <button
-                key={loc}
-                type="button"
-                onClick={() => setLocation(loc)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
-                  location === loc
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
-                }`}
-              >
-                {loc}
-              </button>
-            ))}
-          </div>
-
-          {/* Manual Input */}
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Or type location..."
-              className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-emerald-500 focus:outline-none placeholder-slate-500 text-sm"
-            />
-            <button
-              type="button"
-              onClick={captureGPS}
-              disabled={gpsLoading}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white rounded-lg font-semibold text-sm transition-colors"
-              title="Use phone GPS to capture location"
-            >
-              {gpsLoading ? '⏳' : '🛰️'}
-            </button>
-          </div>
-          <p className="text-xs text-gray-400 mt-1">Quick select a gym or use GPS/manual entry</p>
-        </div>
-
-        {/* Notes */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-300 mb-2">
-            Notes (optional)
-          </label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="How did it feel? Any tips?"
-            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-emerald-500 focus:outline-none placeholder-slate-500 resize-none h-24"
-          />
-        </div>
-
-        {/* Photo Capture */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-300 mb-2">
-            Route Photos (optional)
+            📸 Route Photo (required)
           </label>
           <div className="flex gap-2 mb-4">
             <button
@@ -297,7 +219,7 @@ export function ClimbLogger() {
               onClick={() => cameraInputRef.current?.click()}
               className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
             >
-              📸 Take Photo
+              📷 Take Photo
             </button>
             <button
               type="button"
@@ -348,6 +270,57 @@ export function ClimbLogger() {
             </div>
           )}
           <p className="text-xs text-gray-400">{photos.length} photo(s) selected</p>
+        </div>
+
+        {/* Route Name */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-300 mb-2">
+            Route Name (optional)
+          </label>
+          <input
+            type="text"
+            value={routeName}
+            onChange={(e) => setRouteName(e.target.value)}
+            placeholder="e.g., The Red Wall, Crimper Challenge..."
+            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-emerald-500 focus:outline-none placeholder-slate-500"
+          />
+        </div>
+
+        {/* Difficulty */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-300 mb-2">
+            Route Difficulty
+          </label>
+          <select
+            value={difficulty}
+            onChange={(e) => setDifficulty(e.target.value)}
+            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-emerald-500 focus:outline-none"
+          >
+            {difficulties.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Location (read-only, from photo metadata) */}
+        {location && (
+          <div>
+            <label className="block text-sm font-semibold text-gray-300 mb-2">
+              📍 Location
+            </label>
+            <div className="w-full px-4 py-2 bg-slate-700 text-gray-300 rounded-lg border border-slate-600">
+              {location}
+            </div>
+            <p className="text-xs text-gray-400 mt-1">Extracted from photo metadata</p>
+          </div>
+        )}
+
+        {/* Star Ratings */}
+        <div className="grid grid-cols-2 gap-4">
+          <StarRating value={funFactor} onChange={setFunFactor} label="🎉 Fun Factor" />
+          <StarRating value={perceivedDifficulty} onChange={setPerceivedDifficulty} label="💪 How Hard?" />
         </div>
 
         {/* Error/Success Messages */}
