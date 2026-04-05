@@ -182,6 +182,26 @@ export function ClimbLogger() {
     <div className="bg-slate-800 rounded-lg p-4 sm:p-6 mb-6">
       <h2 className="text-xl sm:text-2xl font-bold text-white mb-6">Log a Climb</h2>
 
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Difficulty - First selection */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-300 mb-2">
+            Route Difficulty (select first)
+          </label>
+          <select
+            value={difficulty}
+            onChange={(e) => setDifficulty(e.target.value)}
+            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-emerald-500 focus:outline-none"
+          >
+            {difficulties.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </select>
+        </div>
+
       {/* Timer Display */}
       <div className="bg-slate-900 rounded-lg p-6 sm:p-8 mb-6 text-center">
         <p className="text-gray-400 text-sm mb-2">Climbing Time</p>
@@ -206,8 +226,6 @@ export function ClimbLogger() {
         </div>
       </div>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
         {/* Photo Capture - Right under timer */}
         <div>
           <label className="block text-sm font-semibold text-gray-300 mb-2">
@@ -284,24 +302,6 @@ export function ClimbLogger() {
             placeholder="e.g., The Red Wall, Crimper Challenge..."
             className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-emerald-500 focus:outline-none placeholder-slate-500"
           />
-        </div>
-
-        {/* Difficulty */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-300 mb-2">
-            Route Difficulty
-          </label>
-          <select
-            value={difficulty}
-            onChange={(e) => setDifficulty(e.target.value)}
-            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-emerald-500 focus:outline-none"
-          >
-            {difficulties.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
         </div>
 
         {/* Location (read-only, from photo metadata) */}
