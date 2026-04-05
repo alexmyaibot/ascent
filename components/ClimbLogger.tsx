@@ -7,7 +7,9 @@ import { useTimer } from '@/hooks/useTimer'
 export function ClimbLogger() {
   const { seconds, isRunning, start, stop, reset, formatTime } = useTimer()
   const [routeName, setRouteName] = useState('')
-  const [difficulty, setDifficulty] = useState('5.6')
+  const [climbType, setClimbType] = useState<'topRope' | 'boulder'>('topRope')
+  const [topRopeDifficulty, setTopRopeDifficulty] = useState(6) // 5.6 is index 6
+  const [boulderDifficulty, setBoulderDifficulty] = useState(0) // V0
   const [location, setLocation] = useState('')
   const [funFactor, setFunFactor] = useState(0)
   const [perceivedDifficulty, setPerceivedDifficulty] = useState(0)
@@ -19,7 +21,16 @@ export function ClimbLogger() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
 
-  const difficulties = ['5.5', '5.6', '5.7', '5.8', '5.9', '5.10a', '5.10b', '5.10c', '5.10d', '5.11a', '5.11b', '5.11c', '5.11d', '5.12a', '5.12b', '5.12c', '5.12d', 'V0', 'V1', 'V2', 'V3', 'V4', 'V5']
+  const topRopeGrades = ['5.5', '5.6', '5.7', '5.8', '5.9', '5.10a', '5.10b', '5.10c', '5.10d', '5.11a', '5.11b', '5.11c', '5.11d', '5.12a', '5.12b', '5.12c', '5.12d']
+  const boulderGrades = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5']
+
+  const getCurrentDifficulty = () => {
+    if (climbType === 'topRope') {
+      return topRopeGrades[topRopeDifficulty]
+    } else {
+      return boulderGrades[boulderDifficulty]
+    }
+  }
 
   const handlePhotoCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.currentTarget.files
@@ -118,7 +129,8 @@ export function ClimbLogger() {
           {
             user_id: user_id,
             route_name: routeName || null,
-            difficulty: difficulty,
+            difficulty: getCurrentDifficulty(),
+            climb_type: climbType,
             time_seconds: seconds,
             location: location || null,
             fun_factor: funFactor,
@@ -160,7 +172,9 @@ export function ClimbLogger() {
 
       // Reset form
       setRouteName('')
-      setDifficulty('5.6')
+      setClimbType('topRope')
+      setTopRopeDifficulty(6)
+      setBoulderDifficulty(0)
       setLocation('')
       setFunFactor(0)
       setPerceivedDifficulty(0)
@@ -184,22 +198,81 @@ export function ClimbLogger() {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Difficulty - First selection */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-300 mb-2">
-            Route Difficulty (select first)
+        {/* Climb Type & Difficulty Sliders */}
+        <div className="bg-slate-900 rounded-lg p-4">
+          <label className="block text-sm font-semibold text-gray-300 mb-4">
+            Climb Type & Difficulty
           </label>
-          <select
-            value={difficulty}
-            onChange={(e) => setDifficulty(e.target.value)}
-            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-emerald-500 focus:outline-none"
-          >
-            {difficulties.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
+          
+          {/* Type Toggle */}
+          <div className="flex gap-2 mb-6">
+            <button
+              type="button"
+              onClick={() => setClimbType('topRope')}
+              className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-colors ${
+                climbType === 'topRope'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-700 text-gray-400 hover:bg-slate-600'
+              }`}
+            >
+              🧗 Top Rope
+            </button>
+            <button
+              type="button"
+              onClick={() => setClimbType('boulder')}
+              className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-colors ${
+                climbType === 'boulder'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-slate-700 text-gray-400 hover:bg-slate-600'
+              }`}
+            >
+              🪨 Boulder
+            </button>
+          </div>
+
+          {/* Top Rope Slider */}
+          {climbType === 'topRope' && (
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm text-gray-400">Difficulty</label>
+                <span className="text-xl font-bold text-blue-400">{topRopeGrades[topRopeDifficulty]}</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max={topRopeGrades.length - 1}
+                value={topRopeDifficulty}
+                onChange={(e) => setTopRopeDifficulty(parseInt(e.target.value))}
+                className="w-full h-3 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+              />
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>{topRopeGrades[0]}</span>
+                <span>{topRopeGrades[topRopeGrades.length - 1]}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Boulder Slider */}
+          {climbType === 'boulder' && (
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm text-gray-400">Difficulty</label>
+                <span className="text-xl font-bold text-purple-400">{boulderGrades[boulderDifficulty]}</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max={boulderGrades.length - 1}
+                value={boulderDifficulty}
+                onChange={(e) => setBoulderDifficulty(parseInt(e.target.value))}
+                className="w-full h-3 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+              />
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>{boulderGrades[0]}</span>
+                <span>{boulderGrades[boulderGrades.length - 1]}</span>
+              </div>
+            </div>
+          )}
         </div>
 
       {/* Timer Display */}
