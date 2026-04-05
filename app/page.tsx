@@ -26,11 +26,7 @@ export default function Home() {
     setLoading(false)
   }
 
-  const handleSignOut = () => {
-    localStorage.removeItem('ascent_auth')
-    setIsAuthed(false)
-    router.push('/login')
-  }
+
 
   if (loading) {
     return <div className="text-center text-gray-400 pt-8">Loading...</div>
@@ -61,20 +57,12 @@ export default function Home() {
             <h1 className="text-2xl font-bold text-white">Ascent 🧗</h1>
             <p className="text-gray-400 text-sm">Owen's Climbing Tracker</p>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
-            >
-              📊 Dashboard
-            </button>
-            <button
-              onClick={handleSignOut}
-              className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-gray-300 rounded-lg text-sm transition-colors"
-            >
-              Sign Out
-            </button>
-          </div>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
+          >
+            📊 Dashboard
+          </button>
         </div>
       </header>
 
