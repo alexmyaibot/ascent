@@ -8,7 +8,7 @@ export function ClimbLogger() {
   const { seconds, isRunning, start, stop, reset, formatTime } = useTimer()
   const [routeName, setRouteName] = useState('')
   const [difficulty, setDifficulty] = useState('5.6')
-  const [location, setLocation, setLocationData] = useState('')
+  const [location, setLocation] = useState('')
   const [funFactor, setFunFactor] = useState(0)
   const [perceivedDifficulty, setPerceivedDifficulty] = useState(0)
   const [loading, setLoading] = useState(false)
