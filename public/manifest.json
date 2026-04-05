@@ -1,0 +1,52 @@
+{
+  "name": "Ascent - Climbing Tracker",
+  "short_name": "Ascent",
+  "description": "Track your climbing sessions with photos, ratings, and analytics",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["fitness", "sports"],
+  "screenshots": [
+    {
+      "src": "/screenshot-narrow.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ]
+}
